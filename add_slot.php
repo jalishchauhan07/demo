@@ -1,140 +1,181 @@
-<?php 
-include 'config.php';
-checkAdminAuth($conn);
+@extends('layouts.admin')
 
-if($_SERVER['REQUEST_METHOD'] == 'POST'){
-  $date = $conn->real_escape_string($_POST['slot_date']);
-  $time = $conn->real_escape_string($_POST['slot_time']);
-  $conn->query("INSERT INTO slots (slot_date, slot_time) VALUES ('$date', '$time')");
-  header("Location: dashboard.php");
-  exit();
-}
-?>
+@section('title', 'Add New Slot')
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Add Slot - Admin Panel</title>
-  <link rel="stylesheet" href="assets/css/bootstrap.min.css">
-  <link rel="stylesheet" href="assets/css/style.css">
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+@section('content')
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <h4 class="mb-0">📅 Add New Appointment Slot</h4>
+        </div>
+
+        <div class="card-body">
+          @if ($errors->any())
+            <div class="alert alert-danger">
+              <ul class="mb-0">
+                @foreach ($errors->all() as $error)
+                  <li>{{ $error }}</li>
+                @endforeach
+              </ul>
+            </div>
+          @endif
+
+          <form action="{{ route('slot.store') }}" method="POST">
+            @csrf
+
+            {{-- Date & Time Section --}}
+            <h5 class="mb-3 text-primary">📆 Date & Time</h5>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="slot_date" class="form-label fw-bold">Date <span class="text-danger">*</span></label>
+                <input type="date" 
+                       class="form-control @error('slot_date') is-invalid @enderror" 
+                       id="slot_date" 
+                       name="slot_date" 
+                       value="{{ old('slot_date') }}"
+                       min="{{ date('Y-m-d') }}"
+                       required>
+                @error('slot_date')
+                  <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label for="slot_time" class="form-label fw-bold">Time <span class="text-danger">*</span></label>
+                <input type="time" 
+                       class="form-control @error('slot_time') is-invalid @enderror" 
+                       id="slot_time" 
+                       name="slot_time" 
+                       value="{{ old('slot_time') }}"
+                       required>
+                @error('slot_time')
+                  <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+              </div>
+            </div>
+
+            {{-- Pickup Point --}}
+            <div class="mb-3">
+              <label for="pickup_point" class="form-label fw-bold">Pickup Point <span class="text-danger">*</span></label>
+              <select class="form-select @error('pickup_point') is-invalid @enderror" 
+                      id="pickup_point" 
+                      name="pickup_point" 
+                      required>
+                <option value="">Select pickup location...</option>
+                @foreach ($pickupPoints as $point)
+                  <option value="{{ $point }}" {{ old('pickup_point') == $point ? 'selected' : '' }}>
+                    {{ $point }}
+                  </option>
+                @endforeach
+              </select>
+              @error('pickup_point')
+                <div class="invalid-feedback">{{ $message }}</div>
+              @enderror
+            </div>
+
+            <hr class="my-4">
+
+            {{-- Appointments Section --}}
+            <h5 class="mb-3 text-primary">👥 Appointments (Optional)</h5>
+            <p class="text-muted small mb-3">You can add multiple appointments to this slot</p>
+
+            <div id="appointments-container">
+              <div class="appointment-row mb-3 p-3 border rounded bg-light">
+                <div class="row">
+                  <div class="col-md-5 mb-2">
+                    <label class="form-label fw-bold">Name</label>
+                    <input type="text" 
+                           class="form-control" 
+                           name="appointment_name[]" 
+                           placeholder="Patient name">
+                  </div>
+                  <div class="col-md-5 mb-2">
+                    <label class="form-label fw-bold">Phone</label>
+                    <input type="tel" 
+                           class="form-control" 
+                           name="appointment_phone[]" 
+                           placeholder="+91 98765 43210">
+                  </div>
+                  <div class="col-md-2 d-flex align-items-end mb-2">
+                    <button type="button" class="btn btn-danger btn-sm remove-appointment" disabled>
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button type="button" class="btn btn-outline-primary btn-sm mb-3" id="add-appointment">
+              + Add Another Appointment
+            </button>
+
+            <div class="d-flex justify-content-between mt-4">
+              <a href="{{ route('dashboard') }}" class="btn btn-secondary">
+                ← Back to Dashboard
+              </a>
+              <button type="submit" class="btn btn-primary">
+                📅 Create Slot
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+@endsection
+
+@section('extra-scripts')
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const container = document.getElementById('appointments-container');
+    const addBtn = document.getElementById('add-appointment');
+
+    // Add appointment row
+    addBtn.addEventListener('click', function() {
+      const newRow = document.createElement('div');
+      newRow.className = 'appointment-row mb-3 p-3 border rounded bg-light';
+      newRow.innerHTML = `
+        <div class="row">
+          <div class="col-md-5 mb-2">
+            <label class="form-label fw-bold">Name</label>
+            <input type="text" class="form-control" name="appointment_name[]" placeholder="Patient name">
+          </div>
+          <div class="col-md-5 mb-2">
+            <label class="form-label fw-bold">Phone</label>
+            <input type="tel" class="form-control" name="appointment_phone[]" placeholder="+91 98765 43210">
+          </div>
+          <div class="col-md-2 d-flex align-items-end mb-2">
+            <button type="button" class="btn btn-danger btn-sm remove-appointment">Remove</button>
+          </div>
+        </div>
+      `;
+      container.appendChild(newRow);
+      updateRemoveButtons();
+    });
+
+    // Remove appointment row (event delegation)
+    container.addEventListener('click', function(e) {
+      if (e.target.classList.contains('remove-appointment')) {
+        e.target.closest('.appointment-row').remove();
+        updateRemoveButtons();
+      }
+    });
+
+    // Update remove button states
+    function updateRemoveButtons() {
+      const rows = container.querySelectorAll('.appointment-row');
+      rows.forEach((row, index) => {
+        const removeBtn = row.querySelector('.remove-appointment');
+        removeBtn.disabled = rows.length === 1;
+      });
     }
 
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f8f9fa;
-    }
-
-    /* Navbar */
-    .navbar {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      padding: 1rem 2rem;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 1000;
-    }
-
-    .navbar-brand {
-      font-size: 1.5rem;
-      font-weight: 600;
-      color: white !important;
-    }
-
-    /* Sidebar */
-    .sidebar {
-      position: fixed;
-      top: 60px;
-      left: 0;
-      bottom: 0;
-      width: 250px;
-      background: white;
-      box-shadow: 2px 0 5px rgba(0,0,0,0.05);
-      padding-top: 2rem;
-    }
-
-    .sidebar a {
-      display: block;
-      padding: 1rem 1.5rem;
-      color: #495057;
-      text-decoration: none;
-      font-weight: 500;
-      transition: all 0.3s ease;
-      border-left: 3px solid transparent;
-    }
-
-    .sidebar a:hover {
-      background-color: #f8f9fa;
-      color: #667eea;
-      border-left-color: #667eea;
-    }
-
-    .sidebar a.active {
-      background-color: #e7e9fd;
-      color: #667eea;
-      border-left-color: #667eea;
-    }
-
-    /* Content */
-    .content {
-      margin-left: 250px;
-      margin-top: 80px;
-      padding: 2rem;
-      min-height: calc(100vh - 80px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .card {
-      background: white;
-      border-radius: 10px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-      border: none;
-      max-width: 600px;
-      width: 100%;
-    }
-
-    .card h4 {
-      color: #2d3748;
-      font-weight: 600;
-    }
-
-    .form-label {
-      color: #2d3748;
-      font-weight: 500;
-      margin-bottom: 0.5rem;
-    }
-
-    .form-control {
-      border-radius: 6px;
-      border: 1px solid #cbd5e0;
-      padding: 0.75rem;
-    }
-
-    .form-control:focus {
-      border-color: #667eea;
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    }
-
-    .btn {
-      border-radius: 6px;
-      padding: 0.75rem 1rem;
-      font-weight: 500;
-      transition: all 0.3s ease;
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      border: none;
-    }
-
-    .btn-primary
+    // Set minimum date to today
+    document.getElementById('slot_date').min = new Date().toISOString().split('T')[0];
+  });
+</script>
+@endsection
