@@ -1,10 +1,10 @@
 <?php
-// app/Http/Controllers/AuthController.php
 
 namespace App\Http\Controllers;
 
 use App\Models\Admin;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Session;
 
 class AuthController extends Controller
@@ -27,17 +27,18 @@ class AuthController extends Controller
         ]);
 
         $username = $request->username;
-        $password = md5($request->password); // Using MD5 for compatibility
-        
-        $admin = Admin::where('username', $username)
-                     ->where('password', $password)
-                     ->first();
+        $password = $request->password;
 
-        if ($admin) {
+        // ✅ Find admin by username
+        $admin = Admin::where('username', $username)->first();
+
+        // ✅ Check if admin exists and password is valid (bcrypt)
+        if ($admin && Hash::check($password, $admin->password)) {
+
             $rememberMe = $request->has('remember');
             $token = $admin->generateAuthToken($rememberMe);
-            
-            // Store in session
+
+            // ✅ Store session
             session([
                 'admin' => $admin->username,
                 'admin_id' => $admin->id,
@@ -47,12 +48,13 @@ class AuthController extends Controller
             return redirect()->route('dashboard')->with('success', 'Login successful!');
         }
 
+        // ❌ Invalid credentials
         return back()->withErrors(['credentials' => 'Invalid credentials'])->withInput();
     }
 
     public function logout()
     {
-        // Clear token from database
+        // ✅ Clear token from database
         if (session('admin_token')) {
             $admin = Admin::where('auth_token', session('admin_token'))->first();
             if ($admin) {
@@ -60,14 +62,14 @@ class AuthController extends Controller
             }
         }
 
-        // Clear session
+        // ✅ Clear session
         Session::flush();
 
         return redirect()->route('login')->with('success', 'Logged out successfully!');
     }
 
     /**
-     * Check if user is authenticated
+     * ✅ Check if user is authenticated
      */
     private function checkAuth(): bool
     {
@@ -76,7 +78,7 @@ class AuthController extends Controller
         }
 
         $admin = Admin::where('auth_token', session('admin_token'))->first();
-        
+
         if ($admin && $admin->isTokenValid()) {
             return true;
         }

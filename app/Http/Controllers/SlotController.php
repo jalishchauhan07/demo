@@ -145,21 +145,24 @@ class SlotController extends Controller
      * Show edit form
      */
     public function edit($id)
-    {
-        $slot = Slot::findOrFail($id);
-        $slot->appointment = json_decode($slot->appointment, true) ?? [];
+{
+    $slot = Slot::findOrFail($id);
 
-        $pickupPoints = [
-            'Main Hospital Entrance',
-            'City Center Bus Stop',
-            'Railway Station Parking',
-            'North Gate Clinic',
-            'Community Health Center',
-            'Airport Pickup Zone',
-        ];
+    // no need to decode — it’s already an array
+    $slot->appointment = $slot->appointment ?? [];
 
-        return view('admin.edit_slot', compact('slot', 'pickupPoints'));
-    }
+    $pickupPoints = [
+        'Main Hospital Entrance',
+        'City Center Bus Stop',
+        'Railway Station Parking',
+        'North Gate Clinic',
+        'Community Health Center',
+        'Airport Pickup Zone',
+    ];
+
+    return view('admin.edit_slot', compact('slot', 'pickupPoints'));
+}
+
 
     /**
      * Update existing slot

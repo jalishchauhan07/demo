@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Carbon\Carbon;
 
 class Admin extends Model
 {
@@ -14,46 +16,64 @@ class Admin extends Model
         'token_expiry',
     ];
 
-    protected $hidden = [
-        'password',
-    ];
+    // Disable created_at/updated_at
+    public $timestamps = false;
 
+    // Automatically cast token expiry to Carbon instance
     protected $casts = [
         'token_expiry' => 'datetime',
     ];
 
     /**
-     * Generate and save authentication token
+     * Automatically hash password when setting it
      */
-    public function generateAuthToken(bool $rememberMe = false): string
+    public function setPasswordAttribute($value)
+    {
+        // Only hash if it’s not already hashed
+        if (!empty($value) && !Str::startsWith($value, '$2y$')) {
+            $this->attributes['password'] = Hash::make($value);
+        } else {
+            $this->attributes['password'] = $value;
+        }
+    }
+
+    /**
+     * Generate an authentication token and set expiry time
+     */
+    public function generateAuthToken($rememberMe = false)
     {
         $token = Str::random(64);
-        $hours = $rememberMe ? 720 : 24; // 30 days or 24 hours
-        
-        $this->auth_token = $token;
-        $this->token_expiry = now()->addHours($hours);
-        $this->save();
-        
+
+        $expiry = $rememberMe
+            ? now()->addDays(30)   // remember me → 30 days
+            : now()->addHours(8);  // normal login → 8 hours
+
+        $this->forceFill([
+            'auth_token' => $token,
+            'token_expiry' => $expiry,
+        ])->save();
+
         return $token;
     }
 
     /**
-     * Check if token is valid
+     * Check if current token is still valid
      */
     public function isTokenValid(): bool
     {
-        return $this->auth_token !== null 
-            && $this->token_expiry !== null 
-            && $this->token_expiry->isFuture();
+        return !empty($this->auth_token)
+            && $this->token_expiry
+            && now()->lt($this->token_expiry);
     }
 
     /**
-     * Clear authentication token
+     * Clear the authentication token
      */
     public function clearAuthToken(): void
     {
-        $this->auth_token = null;
-        $this->token_expiry = null;
-        $this->save();
+        $this->forceFill([
+            'auth_token' => null,
+            'token_expiry' => null,
+        ])->save();
     }
 }

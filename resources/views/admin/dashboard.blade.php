@@ -77,10 +77,10 @@
           <tr>
             <td><strong>{{ ($slots->currentPage() - 1) * $slots->perPage() + $loop->iteration }}</strong></td>
             <td>
-              <span class="badge bg-secondary">{{ $slot->formatted_date }}</span>
+              <span class="badge bg-secondary">{{ $slot->slot_date }}</span>
             </td>
             <td>
-              <span class="badge bg-primary">{{ $slot->formatted_time }}</span>
+              <span class="badge bg-primary">{{ $slot->slot_time }}</span>
             </td>
             <td>
               <i class="bi bi-geo-alt-fill text-danger"></i> {{ $slot->pickup_point ?? 'N/A' }}

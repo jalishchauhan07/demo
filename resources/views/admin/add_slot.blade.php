@@ -118,16 +118,22 @@
             </div>
 
             <div class="mb-3">
-              <!-- <label for="appointment" class="form-label">Appointment With <span class="text-danger">*</span></label> -->
+              <label for="appointment" class="form-label">Appointment With <span class="text-danger">*</span></label>
               <select class="form-select @error('appointment') is-invalid @enderror"
-                      id="appointment" name="appointment" required>
-                <option value="">Select doctor / staff...</option>
-                @foreach ($appointments as $appt)
-                  <option value="{{ $appt }}" {{ old('appointment') == $appt ? 'selected' : '' }}>
-                    {{ $appt }}
-                  </option>
-                @endforeach
-              </select>
+        id="appointment" name="appointment" required>
+  <option value="">Select doctor / staff...</option>
+
+  @if(!empty($appointments) && is_array($appointments))
+    @foreach ($appointments as $appt)
+      <option value="{{ $appt }}" {{ old('appointment') == $appt ? 'selected' : '' }}>
+        {{ $appt }}
+      </option>
+    @endforeach
+  @else
+    <option value="" disabled>No staff available</option>
+  @endif
+</select>
+
               @error('appointment')
                 <div class="invalid-feedback">{{ $message }}</div>
               @enderror
@@ -144,7 +150,7 @@
             </div>
 
             <div class="d-flex justify-content-between mt-4">
-              <a href="{{ route('dashboard.index') }}" class="btn btn-secondary">
+              <a href="{{ route('dashboard') }}" class="btn btn-secondary">
                 ← Back to Appointments
               </a>
               <button type="submit" class="btn btn-primary">
