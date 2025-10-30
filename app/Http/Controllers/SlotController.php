@@ -162,7 +162,7 @@ class SlotController extends Controller
 
     return view('admin.edit_slot', compact('slot', 'pickupPoints'));
 }
-
+    
 
     /**
      * Update existing slot

@@ -12,16 +12,18 @@ use App\Http\Controllers\WhatsAppController;
 */
 
 // WhatsApp message sender (frontend page)
-Route::get('/whatsapp', function () {
+    Route::get('/whatsapp', function () {
     return view('whatsapp.send');
 })->name('whatsapp.send');
 
 // WhatsApp Webhook (Twilio or other API will POST here)
-Route::post('/whatsapp/webhook', [WhatsAppController::class, 'receiveMessage'])->name('whatsapp.webhook');
-
-// Optional: For manual testing
-Route::get('/send-slots', [WhatsAppController::class, 'sendSlots'])->name('whatsapp.sendSlots');
-
+// In routes/api.php
+Route::post('/webhook', [WhatsAppController::class, 'receiveMessage'])
+    ->middleware('twilio.verify')
+    ->name('whatsapp.webhook');
+    
+// ✅ Add this route with logging middleware
+Route::post('/send-slots', [WhatsAppController::class, 'sendSlots'])->middleware('log.send.slot')->name('send.slots');
 
 /*
 |--------------------------------------------------------------------------

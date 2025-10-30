@@ -14,15 +14,15 @@
         <div class="alert alert-danger">{{ session('error') }}</div>
       @endif
 
-      <form action="{{ route('whatsapp.send') }}" method="POST">
-        @csrf
-        <div class="mb-3">
-          <label for="to" class="form-label">📞 WhatsApp Number (with country code)</label>
-          <input type="text" class="form-control" id="to" name="to" placeholder="+911234567890" required>
-        </div>
+      <form action="{{ route('send.slots') }}" method="POST">
+    @csrf
+    <div class="mb-3">
+        <label for="to" class="form-label">📞 WhatsApp Number (with country code)</label>
+        <input type="text" class="form-control" id="to" name="to" placeholder="+911234567890" required>
+    </div>
 
-        <button type="submit" class="btn btn-success w-100">Send Available Slots</button>
-      </form>
+    <button type="submit" class="btn btn-success w-100">Send Available Slots</button>
+</form>
 
       <p class="text-muted small mt-3">
         ➡️ This will send all upcoming available slots to the entered WhatsApp number using Twilio.
